@@ -1,10 +1,13 @@
 import { scrapeBOE } from './scraper';
 import { geocodeAuctions } from './geocoder';
+import { scrapeDetails } from './detailScraper';
 import { exportJson } from './export';
 
 async function main() {
   console.log('--- Starting Daily Task ---');
   await scrapeBOE();
+  console.log('--- Enriching Details ---');
+  await scrapeDetails();
   console.log('--- Starting Geocoding ---');
   await geocodeAuctions();
   console.log('--- Exporting JSON ---');

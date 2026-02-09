@@ -30,7 +30,21 @@ export async function getDb() {
       url TEXT,
       source TEXT,
       last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-      court TEXT
+      court TEXT,
+      
+      -- New detailed fields
+      identifier TEXT,
+      auction_type TEXT,
+      claim_amount REAL,
+      appraisal_amount REAL,
+      min_bid REAL,
+      deposit_amount REAL,
+      catastral_ref TEXT,
+      full_address TEXT,
+      postal_code TEXT,
+      visitable TEXT,
+      possession_status TEXT,
+      has_images BOOLEAN DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (

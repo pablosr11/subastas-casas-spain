@@ -4,19 +4,20 @@ import { getDb } from './db';
 
 const SEARCH_URL = 'https://subastas.boe.es/subastas_ava.php';
 
-async function scrapeBOE() {
-  const db = await getDb();
-  console.log('Starting BOE scraping with detailed extraction...');
+// Provinces to scrape (01 to 52)
+const PROVINCES = Array.from({ length: 52 }, (_, i) => (i + 1).toString().padStart(2, '0'));
 
+async function scrapeProvince(provinceCode: string) {
   try {
+    console.log(`Scraping Province Code: ${provinceCode}...`);
     const params = new URLSearchParams();
     params.append('campo[2]', 'SUBASTA.ESTADO.CODIGO');
-    params.append('dato[2]', 'EJ');
+    params.append('dato[2]', 'EJ'); // Ejecución
     params.append('campo[3]', 'BIEN.TIPO');
-    params.append('dato[3]', 'I');
+    params.append('dato[3]', 'I'); // Inmueble
     params.append('campo[8]', 'BIEN.COD_PROVINCIA');
-    params.append('dato[8]', ''); 
-    params.append('page_hits', '500'); 
+    params.append('dato[8]', provinceCode); 
+    params.append('page_hits', '500'); // Get max per province
     params.append('accion', 'Buscar');
 
     const response = await axios.post(SEARCH_URL, params.toString(), {
@@ -51,7 +52,7 @@ async function scrapeBOE() {
           // Extract province/city
           let city = '';
           let province = '';
-          const geoMatch = detailLine.match(/([A-ZÁÉÍÓÚÑ'\s\-]+)\s+\(([A-ZÁÉÍÓÚÑ\s\-]+)\)$/i);
+          const geoMatch = detailLine.match(/([A-ZÁÉÍÓÚÑ'\\s\\-]+)\\s+\\(([A-ZÁÉÍÓÚÑ\\s\\-]+)\\)$/i);
           if (geoMatch) {
             city = geoMatch[1].trim();
             province = geoMatch[2].trim();
@@ -59,11 +60,11 @@ async function scrapeBOE() {
 
           // Extract amount
           let amount = null;
-          const amountMatch = statusLine.match(/Valor\s+subasta\s+([\d\.]+)/i) || 
-                        detailLine.match(/([\d\.]+,\d{2})\s+€/i) ||
-                        detailLine.match(/([\d\.]+)\s+€/i);
+          const amountMatch = statusLine.match(/Valor\\s+subasta\\s+([\\d\\.]+)/i) || 
+                        detailLine.match(/([\\d\\.]+,\\d{2})\\s+€/i) ||
+                        detailLine.match(/([\\d\\.]+)\\s+€/i);
           if (amountMatch) {
-            amount = parseFloat(amountMatch[1].replace(/\./g, '').replace(',', '.'));
+            amount = parseFloat(amountMatch[1].replace(/\\./g, '').replace(',', '.'));
           }
 
           items.push({
@@ -73,8 +74,25 @@ async function scrapeBOE() {
       }
     });
 
-    console.log(`Found ${items.length} auctions. Updating database...`);
+    console.log(`Province ${provinceCode}: Found ${items.length} auctions.`);
+    return items;
+  } catch (error: any) {
+    console.error(`Error scraping province ${provinceCode}:`, error.message);
+    return [];
+  }
+}
 
+async function scrapeBOE() {
+  const db = await getDb();
+  console.log('Starting full national BOE scrape...');
+  
+  let totalItems = 0;
+
+  for (const province of PROVINCES) {
+    const items = await scrapeProvince(province);
+    totalItems += items.length;
+
+    // Save batch to DB
     for (const item of items) {
       await db.run(
         `INSERT INTO auctions (id, title, court, status, description, amount, url, source, location_city, location_province, last_updated) 
@@ -92,13 +110,15 @@ async function scrapeBOE() {
       );
     }
 
-    await db.run('INSERT INTO scraper_logs (message, status) VALUES (?, ?)', [
-      `Scraped ${items.length} items from BOE`,
-      'SUCCESS'
-    ]);
-  } catch (error: any) {
-    console.error('Error scraping BOE:', error.message);
+    // Polite delay
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
+
+  await db.run('INSERT INTO scraper_logs (message, status) VALUES (?, ?)', [
+    `Scraped ${totalItems} items from all provinces`,
+    'SUCCESS'
+  ]);
+  console.log(`Finished. Total auctions scraped: ${totalItems}`);
 }
 
 if (require.main === module) {

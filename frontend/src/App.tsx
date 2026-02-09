@@ -157,7 +157,7 @@ function App() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {status === 'ALL' ? 'Todos' : status === 'LIVE' ? 'En Vivo' : 'Próximamente'}
+                {status === 'ALL' ? 'Todos' : status === 'LIVE' ? 'En Vivo' : 'Próximas'}
               </button>
             ))}
           </div>
