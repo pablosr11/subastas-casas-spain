@@ -118,11 +118,28 @@ function App() {
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-50 font-sans text-slate-900 overflow-hidden" style={{ height: '100vh', width: '100vw' }}>
       <header className="bg-blue-700 text-white shadow-md p-3 flex flex-col md:flex-row justify-between items-center gap-3 z-[1001] shrink-0">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-6 h-6" />
-          <div>
-            <h1 className="text-base font-bold leading-tight">Subastas España</h1>
-            <p className="text-[9px] text-blue-200">BUILD: 20260209-V5 | {lastUpdatedDate}</p>
+        <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-6 h-6" />
+            <div>
+              <h1 className="text-base font-bold leading-tight">Subastas España</h1>
+              <p className="text-[9px] text-blue-200">BUILD: 20260209-V6 | {lastUpdatedDate}</p>
+            </div>
+          </div>
+          {/* Mobile view toggles in header top row */}
+          <div className="flex md:hidden bg-blue-800 p-0.5 rounded-lg gap-0.5 border border-blue-600/50">
+             <button 
+              onClick={() => setViewMode('list')} 
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100'}`}
+             >
+               <List className="w-4 h-4" />
+             </button>
+             <button 
+              onClick={() => setViewMode('map')} 
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100'}`}
+             >
+               <MapIcon className="w-4 h-4" />
+             </button>
           </div>
         </div>
         
@@ -138,7 +155,7 @@ function App() {
             />
           </div>
           <select
-            className="hidden sm:block px-3 py-1.5 text-sm rounded-lg bg-white text-slate-900 focus:outline-none border-none shadow-inner cursor-pointer"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white text-slate-900 focus:outline-none border-none shadow-inner cursor-pointer"
             value={provinceFilter}
             onChange={(e) => setProvinceFilter(e.target.value)}
           >
@@ -147,7 +164,8 @@ function App() {
           </select>
         </div>
 
-        <div className="flex bg-blue-800 p-1 rounded-lg gap-1 border border-blue-600/50">
+        {/* Desktop Toggles */}
+        <div className="hidden md:flex bg-blue-800 p-1 rounded-lg gap-1 border border-blue-600/50">
            <button 
             onClick={() => setViewMode('list')} 
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100 hover:bg-blue-700'}`}
