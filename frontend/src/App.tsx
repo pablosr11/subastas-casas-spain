@@ -33,6 +33,7 @@ interface Auction {
   lng: number | null;
   amount: number | null;
   last_updated: string;
+  status: string;
 }
 
 // Map helper to handle flyTo
@@ -162,9 +163,21 @@ function App() {
                 onClick={() => handleFocusAuction(auction)}
               >
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded bg-slate-100 mb-2 block w-fit">
-                    {auction.id}
-                  </span>
+                  <div className="flex gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded bg-slate-100 mb-2 block w-fit">
+                      {auction.id}
+                    </span>
+                    {auction.status === 'LIVE' && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 px-2 py-0.5 rounded bg-green-100 mb-2 block w-fit animate-pulse">
+                        ● En Vivo
+                      </span>
+                    )}
+                    {auction.status === 'UPCOMING' && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 px-2 py-0.5 rounded bg-blue-100 mb-2 block w-fit">
+                        Próximamente
+                      </span>
+                    )}
+                  </div>
                   {auction.lat && (
                     <MapPin className="w-4 h-4 text-red-500" />
                   )}

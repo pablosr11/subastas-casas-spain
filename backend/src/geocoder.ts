@@ -14,7 +14,14 @@ async function geocodeAuctions() {
       // Try city + province first
       let query = '';
       if (auction.location_city && auction.location_province) {
-        query = `${auction.location_city}, ${auction.location_province}, Spain`;
+        // Clean the city name: remove common garbage prefixes
+        let cleanCity = auction.location_city
+            .replace(/^[0-9,%]+\s+PLENO\s+DOMINIO\s+DE\s+/i, '')
+            .replace(/^[0-9,%]+\s+PLENO\s+DOMINIO\s+/i, '')
+            .replace(/^[0-9,%]+\s+NUDA\s+PROPIEDAD\s+/i, '')
+            .replace(/^VIVIENDA\s+EN\s+/i, '')
+            .trim();
+        query = `${cleanCity}, ${auction.location_province}, Spain`;
       } else {
         // Fallback: try to find something in description
         const match = auction.description.match(/([A-Z\s]+),\s+([A-Z\s]+)\s*$/i);
