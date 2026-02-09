@@ -65,18 +65,38 @@ function App() {
         a.location_city.toLowerCase().includes(searchLower);
 
       // Province
-      const matchesProvince = !selectedProvince || a.location_province === selectedProvince;
+      const matchesProvince = !selectedProvince || 
+                              (a.location_province && a.location_province === selectedProvince) || 
+                              // Fallback for empty province if city contains it
+                              (a.location_city && a.location_city.includes(selectedProvince));
 
       // Status
+      // Map 'UPCOMING' or 'Próxima apertura'
+      const isUpcoming = a.status === 'UPCOMING' || (a.status === 'Desconocido' && a.description.includes('Próxima'));
+      const isLive = a.status === 'LIVE' || (a.status === 'Desconocido' && a.description.includes('Celebrándose'));
+
       const matchesStatus = selectedStatus === 'ALL' || 
-        (selectedStatus === 'LIVE' && a.status === 'LIVE') ||
-        (selectedStatus === 'UPCOMING' && a.status === 'UPCOMING');
+        (selectedStatus === 'LIVE' && isLive) ||
+        (selectedStatus === 'UPCOMING' && isUpcoming);
 
       return matchesSearch && matchesProvince && matchesStatus;
     }).sort((a, b) => {
-      if (sortBy === 'price-asc') return (a.amount || 0) - (b.amount || 0);
-      if (sortBy === 'price-desc') return (b.amount || 0) - (a.amount || 0);
-      return b.last_updated.localeCompare(a.last_updated); // Default date desc
+      // Helper to get price safely
+      const getPrice = (item: Auction) => item.amount || 0;
+      
+      if (sortBy === 'price-asc') {
+        const pA = getPrice(a);
+        const pB = getPrice(b);
+        // Put zero prices at the end
+        if (pA === 0) return 1;
+        if (pB === 0) return -1;
+        return pA - pB;
+      } 
+      if (sortBy === 'price-desc') {
+        return getPrice(b) - getPrice(a);
+      }
+      // Default: Date desc
+      return (b.last_updated || '').localeCompare(a.last_updated || '');
     });
   }, [auctions, searchTerm, selectedProvince, selectedStatus, sortBy]);
 
