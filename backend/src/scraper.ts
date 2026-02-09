@@ -48,26 +48,26 @@ async function scrapeBOE() {
           else if (statusLine.includes('Próxima apertura')) status = 'UPCOMING';
           else if (statusLine.includes('Concluida') || statusLine.includes('Cancelada') || statusLine.includes('Suspendida')) status = 'CLOSED';
 
-          // Extract province/city from detailLine or court
+          // Extract province/city
           let city = '';
           let province = '';
-          
           const geoMatch = detailLine.match(/([A-ZÁÉÍÓÚÑ'\s\-]+)\s+\(([A-ZÁÉÍÓÚÑ\s\-]+)\)$/i);
           if (geoMatch) {
             city = geoMatch[1].trim();
             province = geoMatch[2].trim();
           }
 
+          // Extract amount
+          let amount = null;
+          const amountMatch = statusLine.match(/Valor\s+subasta\s+([\d\.]+)/i) || 
+                        detailLine.match(/([\d\.]+,\d{2})\s+€/i) ||
+                        detailLine.match(/([\d\.]+)\s+€/i);
+          if (amountMatch) {
+            amount = parseFloat(amountMatch[1].replace(/\./g, '').replace(',', '.'));
+          }
+
           items.push({
-            id,
-            title,
-            court,
-            status,
-            statusLine,
-            detailLine,
-            url: fullUrl,
-            city,
-            province
+            id, title, court, status, detailLine, amount, url: fullUrl, city, province
           });
         }
       }
@@ -77,17 +77,18 @@ async function scrapeBOE() {
 
     for (const item of items) {
       await db.run(
-        `INSERT INTO auctions (id, title, court, status, description, url, source, location_city, location_province, last_updated) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `INSERT INTO auctions (id, title, court, status, description, amount, url, source, location_city, location_province, last_updated) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
          ON CONFLICT(id) DO UPDATE SET
          title=excluded.title,
          court=excluded.court,
          status=excluded.status,
          description=excluded.description,
+         amount=excluded.amount,
          location_city=excluded.location_city,
          location_province=excluded.location_province,
          last_updated=CURRENT_TIMESTAMP`,
-        [item.id, item.title, item.court, item.status, item.detailLine, item.url, 'BOE', item.city, item.province]
+        [item.id, item.title, item.court, item.status, item.detailLine, item.amount, item.url, 'BOE', item.city, item.province]
       );
     }
 

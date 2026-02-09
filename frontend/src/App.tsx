@@ -8,6 +8,7 @@ import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import 'leaflet/dist/leaflet.css';
 
 const DefaultIcon = L.icon({
   iconUrl: markerIcon,
@@ -226,38 +227,40 @@ function App() {
         </div>
 
         {/* Map */}
-        <div className="flex-1 bg-slate-200 relative z-10">
-          <MapContainer 
-            center={mapCenter} 
-            zoom={mapZoom} 
-            style={{ height: '100%', width: '100%' }}
-            zoomControl={false}
-          >
-            <ChangeView center={mapCenter} zoom={mapZoom} />
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {filteredAuctions.filter(a => a.lat && a.lng).map(auction => (
-              <Marker 
-                key={auction.id} 
-                position={[auction.lat!, auction.lng!]}
-              >
-                <Popup>
-                  <div className="w-64 p-1">
-                    <h4 className="font-bold text-slate-900 mb-2 leading-tight">{auction.title}</h4>
-                    <p className="text-xs text-slate-600 mb-3 line-clamp-3">{auction.description}</p>
-                    <div className="flex items-center justify-between border-t pt-2">
-                       <span className="font-bold text-blue-700">{auction.amount ? `${auction.amount.toLocaleString()} €` : ''}</span>
-                       <a href={auction.url} target="_blank" className="text-xs text-blue-500 font-bold hover:underline flex items-center gap-1" rel="noreferrer">
-                        IR AL BOE <ExternalLink className="w-3 h-3" />
-                       </a>
+        <div className="flex-1 bg-slate-200 relative">
+          <div className="absolute inset-0">
+            <MapContainer 
+              center={mapCenter} 
+              zoom={mapZoom} 
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <ChangeView center={mapCenter} zoom={mapZoom} />
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {filteredAuctions.filter(a => a.lat && a.lng).map(auction => (
+                <Marker 
+                  key={auction.id} 
+                  position={[auction.lat!, auction.lng!]}
+                >
+                  <Popup>
+                    <div className="w-64 p-1">
+                      <h4 className="font-bold text-slate-900 mb-2 leading-tight">{auction.title}</h4>
+                      <p className="text-xs text-slate-600 mb-3 line-clamp-3">{auction.description}</p>
+                      <div className="flex items-center justify-between border-t pt-2">
+                         <span className="font-bold text-blue-700">{auction.amount ? `${auction.amount.toLocaleString()} €` : ''}</span>
+                         <a href={auction.url} target="_blank" className="text-xs text-blue-500 font-bold hover:underline flex items-center gap-1" rel="noreferrer">
+                          IR AL BOE <ExternalLink className="w-3 h-3" />
+                         </a>
+                      </div>
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
           
           {/* Map Attribution Overlay (custom position) */}
           <div className="absolute bottom-4 right-4 z-[1000] bg-white/80 backdrop-blur px-2 py-1 rounded text-[10px] text-slate-500 shadow-sm border">

@@ -10,27 +10,22 @@ async function geocodeAuctions() {
 
   for (const auction of auctions) {
     try {
-      // Create a better query string
-      // Try city + province first
       let query = '';
       if (auction.location_city && auction.location_province) {
         // Clean the city name: remove common garbage prefixes
         let cleanCity = auction.location_city
             .replace(/^[0-9,%]+\s+PLENO\s+DOMINIO\s+DE\s+/i, '')
             .replace(/^[0-9,%]+\s+PLENO\s+DOMINIO\s+/i, '')
+            .replace(/^[0-9,%]+\s+NUDA\s+PROPIEDAD\s+DE\s+/i, '')
             .replace(/^[0-9,%]+\s+NUDA\s+PROPIEDAD\s+/i, '')
             .replace(/^VIVIENDA\s+EN\s+/i, '')
+            .replace(/^NAVE\s+INDUSTRIAL\s+EN\s+/i, '')
+            .replace(/^LOCAL\s+COMERCIAL\s+EN\s+/i, '')
             .trim();
         query = `${cleanCity}, ${auction.location_province}, Spain`;
-      } else {
-        // Fallback: try to find something in description
-        const match = auction.description.match(/([A-Z\s]+),\s+([A-Z\s]+)\s*$/i);
-        if (match) {
-          query = `${match[1]}, ${match[2]}, Spain`;
-        }
       }
 
-      if (!query || query.length < 10) {
+      if (!query || query.length < 5) {
           console.log(`Skipping ${auction.id}: Query too short or empty ("${query}")`);
           continue;
       }
@@ -58,11 +53,8 @@ async function geocodeAuctions() {
         console.log(`Success: ${lat}, ${lon}`);
       } else {
         console.log('No results found.');
-        // Mark as attempted by setting a dummy value or just leaving it for next run?
-        // To avoid infinite retries on bad addresses, we could set lat=0.0001
       }
 
-      // Respect Nominatim usage policy (1 request per second)
       await new Promise(resolve => setTimeout(resolve, 1100));
     } catch (error: any) {
       console.error(`Error geocoding ${auction.id}:`, error.message);
