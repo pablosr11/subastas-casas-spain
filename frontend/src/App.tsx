@@ -62,7 +62,7 @@ function App() {
 
   const fetchAuctions = async () => {
     try {
-      const response = await axios.get('api/auctions.json');
+      const response = await axios.get('./api/auctions.json');
       setAuctions(response.data);
       
       // Get the most recent update timestamp from the data
