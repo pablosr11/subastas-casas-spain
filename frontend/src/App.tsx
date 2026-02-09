@@ -56,12 +56,13 @@ function App() {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
   useEffect(() => {
+    console.log('App mounting...');
     fetchAuctions();
   }, []);
 
   const fetchAuctions = async () => {
     try {
-      const response = await axios.get('./api/auctions.json');
+      const response = await axios.get('./api/auctions.json?v=' + Date.now());
       setAuctions(response.data);
       
       if (response.data.length > 0) {
@@ -105,13 +106,13 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="flex flex-col h-screen w-screen bg-slate-50 font-sans text-slate-900 overflow-hidden" style={{ height: '100vh', width: '100vw' }}>
       <header className="bg-blue-700 text-white shadow-md p-4 flex flex-col md:flex-row justify-between items-center gap-4 z-[1001] shrink-0">
         <div className="flex items-center gap-2">
           <Building2 className="w-8 h-8" />
           <div>
             <h1 className="text-lg font-bold">Subastas España</h1>
-            {lastUpdatedDate && <p className="text-[10px] text-blue-200">Act: {lastUpdatedDate}</p>}
+            {lastUpdatedDate && <p className="text-[10px] text-blue-200">Act: {lastUpdatedDate} (v4)</p>}
           </div>
         </div>
         
@@ -142,9 +143,9 @@ function App() {
         </div>
       </header>
 
-      <main className="flex flex-1 overflow-hidden relative">
+      <main className="flex flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 80px)' }}>
         <div className={`${viewMode === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] overflow-y-auto flex-col border-r bg-white shadow-xl z-20 shrink-0`}>
-          <div className="p-3 bg-slate-100 border-b flex justify-between items-center text-sm">
+          <div className="p-3 bg-slate-100 border-b flex justify-between items-center text-sm sticky top-0 z-30">
             <span className="font-semibold text-slate-600">{filteredAuctions.length} Resultados</span>
             {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent" />}
           </div>
@@ -171,7 +172,7 @@ function App() {
         </div>
 
         <div className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 bg-slate-200 relative`}>
-          <div className="absolute inset-0">
+          <div style={{ position: 'absolute', inset: 0 }}>
             <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} zoomControl={false}>
               <ChangeView center={mapCenter} zoom={mapZoom} />
               <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
