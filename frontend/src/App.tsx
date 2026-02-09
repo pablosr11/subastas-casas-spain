@@ -122,7 +122,7 @@ function App() {
           <Building2 className="w-6 h-6" />
           <div>
             <h1 className="text-base font-bold leading-tight">Subastas España</h1>
-            {lastUpdatedDate && <p className="text-[9px] text-blue-200">Act: {lastUpdatedDate}</p>}
+            <p className="text-[9px] text-blue-200">BUILD: 20260209-V5 | {lastUpdatedDate}</p>
           </div>
         </div>
         
