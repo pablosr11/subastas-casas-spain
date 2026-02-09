@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Search, MapPin, ExternalLink, Filter, Building2, Gavel } from 'lucide-react';
+import { Search, MapPin, ExternalLink, Filter, Building2, Gavel, List, Map as MapIcon, ArrowUpDown } from 'lucide-react';
 import L from 'leaflet';
 
 // Leaflet markers fix
@@ -54,9 +54,9 @@ function App() {
   const [mapZoom, setMapZoom] = useState(6);
   const [lastUpdatedDate, setLastUpdatedDate] = useState<string>('');
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [sortBy, setSortBy] = useState<'date' | 'price-asc' | 'price-desc'>('date');
 
   useEffect(() => {
-    console.log('App mounting...');
     fetchAuctions();
   }, []);
 
@@ -86,8 +86,8 @@ function App() {
     return Array.from(set).sort();
   }, [auctions]);
 
-  const filteredAuctions = useMemo(() => {
-    return auctions.filter(a => {
+  const filteredAndSortedAuctions = useMemo(() => {
+    let result = auctions.filter(a => {
       const matchesSearch = 
         a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,7 +95,17 @@ function App() {
       const matchesProvince = !provinceFilter || a.location_province === provinceFilter;
       return matchesSearch && matchesProvince;
     });
-  }, [auctions, searchTerm, provinceFilter]);
+
+    if (sortBy === 'price-asc') {
+      result.sort((a, b) => (a.amount || 0) - (b.amount || 0));
+    } else if (sortBy === 'price-desc') {
+      result.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+    } else {
+      result.sort((a, b) => b.last_updated.localeCompare(a.last_updated));
+    }
+
+    return result;
+  }, [auctions, searchTerm, provinceFilter, sortBy]);
 
   const handleFocusAuction = (a: Auction) => {
     if (a.lat && a.lng) {
@@ -107,28 +117,28 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-50 font-sans text-slate-900 overflow-hidden" style={{ height: '100vh', width: '100vw' }}>
-      <header className="bg-blue-700 text-white shadow-md p-4 flex flex-col md:flex-row justify-between items-center gap-4 z-[1001] shrink-0">
+      <header className="bg-blue-700 text-white shadow-md p-3 flex flex-col md:flex-row justify-between items-center gap-3 z-[1001] shrink-0">
         <div className="flex items-center gap-2">
-          <Building2 className="w-8 h-8" />
+          <Building2 className="w-6 h-6" />
           <div>
-            <h1 className="text-lg font-bold">Subastas España</h1>
-            {lastUpdatedDate && <p className="text-[10px] text-blue-200">Act: {lastUpdatedDate} (v4)</p>}
+            <h1 className="text-base font-bold leading-tight">Subastas España</h1>
+            {lastUpdatedDate && <p className="text-[9px] text-blue-200">Act: {lastUpdatedDate}</p>}
           </div>
         </div>
         
-        <div className="flex flex-1 max-w-2xl gap-2 w-full">
+        <div className="flex flex-1 max-w-xl gap-2 w-full">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
             <input
               type="text"
               placeholder="Buscar..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-slate-900 focus:outline-none border-none shadow-inner"
+              className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg bg-white text-slate-900 focus:outline-none border-none shadow-inner"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <select
-            className="hidden sm:block px-4 py-2 rounded-lg bg-white text-slate-900 focus:outline-none border-none shadow-inner cursor-pointer"
+            className="hidden sm:block px-3 py-1.5 text-sm rounded-lg bg-white text-slate-900 focus:outline-none border-none shadow-inner cursor-pointer"
             value={provinceFilter}
             onChange={(e) => setProvinceFilter(e.target.value)}
           >
@@ -137,60 +147,126 @@ function App() {
           </select>
         </div>
 
-        <div className="flex md:hidden w-full gap-2">
-           <button onClick={() => setViewMode('list')} className={`flex-1 py-1 rounded ${viewMode === 'list' ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'}`}>Lista</button>
-           <button onClick={() => setViewMode('map')} className={`flex-1 py-1 rounded ${viewMode === 'map' ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'}`}>Mapa</button>
+        <div className="flex bg-blue-800 p-1 rounded-lg gap-1 border border-blue-600/50">
+           <button 
+            onClick={() => setViewMode('list')} 
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100 hover:bg-blue-700'}`}
+           >
+             <List className="w-3.5 h-3.5" /> Lista
+           </button>
+           <button 
+            onClick={() => setViewMode('map')} 
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100 hover:bg-blue-700'}`}
+           >
+             <MapIcon className="w-3.5 h-3.5" /> Mapa
+           </button>
         </div>
       </header>
 
-      <main className="flex flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 80px)' }}>
-        <div className={`${viewMode === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] overflow-y-auto flex-col border-r bg-white shadow-xl z-20 shrink-0`}>
-          <div className="p-3 bg-slate-100 border-b flex justify-between items-center text-sm sticky top-0 z-30">
-            <span className="font-semibold text-slate-600">{filteredAuctions.length} Resultados</span>
-            {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent" />}
+      <main className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar / List View */}
+        <div className={`${viewMode === 'list' ? 'flex-1' : 'w-full md:w-[400px] hidden md:flex'} overflow-y-auto flex-col border-r bg-white shadow-xl z-20 shrink-0`}>
+          <div className="p-3 bg-slate-50 border-b flex justify-between items-center text-xs sticky top-0 z-30 shadow-sm">
+            <span className="font-bold text-slate-500 uppercase tracking-wider">{filteredAndSortedAuctions.length} Inmuebles</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-slate-400">
+                <ArrowUpDown className="w-3 h-3" />
+                <select 
+                  className="bg-transparent border-none focus:outline-none font-semibold text-slate-600 cursor-pointer"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  <option value="date">Recientes</option>
+                  <option value="price-asc">Precio Min</option>
+                  <option value="price-desc">Precio Max</option>
+                </select>
+              </div>
+              {loading && <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-500 border-t-transparent" />}
+            </div>
           </div>
           
-          <div className="flex-1">
-            {filteredAuctions.map(auction => (
-              <div key={auction.id} className="p-4 border-b hover:bg-blue-50 transition-colors cursor-pointer group" onClick={() => handleFocusAuction(auction)}>
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex gap-1 flex-wrap">
-                    <span className="text-[9px] font-bold uppercase text-slate-400 bg-slate-100 px-1 rounded">{auction.id}</span>
-                    {auction.status === 'LIVE' && <span className="text-[9px] font-bold text-green-600 bg-green-100 px-1 rounded animate-pulse">LIVE</span>}
+          <div className={`flex-1 ${viewMode === 'list' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0' : 'flex flex-col'}`}>
+            {filteredAndSortedAuctions.map(auction => (
+              <div 
+                key={auction.id} 
+                className={`p-4 border-b hover:bg-blue-50/50 transition-colors cursor-pointer group flex flex-col justify-between ${viewMode === 'list' ? 'border-r border-slate-100' : ''}`} 
+                onClick={() => handleFocusAuction(auction)}
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex gap-1.5 flex-wrap">
+                      <span className="text-[9px] font-black uppercase text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded leading-none">{auction.id}</span>
+                      {auction.status === 'LIVE' && <span className="text-[9px] font-black text-green-600 bg-green-100 px-1.5 py-0.5 rounded leading-none flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>LIVE</span>}
+                    </div>
+                    {auction.lat && <div className="p-1 rounded-full bg-red-50"><MapPin className="w-3 h-3 text-red-500" /></div>}
                   </div>
-                  {auction.lat && <MapPin className="w-3 h-3 text-red-500" />}
+                  <h3 className={`font-bold text-slate-800 leading-snug mb-2 group-hover:text-blue-700 transition-colors ${viewMode === 'list' ? 'text-base' : 'text-sm line-clamp-2'}`}>
+                    {auction.description || auction.title}
+                  </h3>
+                  <div className="space-y-1.5 mb-4">
+                    <p className="text-[11px] font-semibold text-slate-500 capitalize flex items-center gap-1">
+                      <MapPin className="w-3 h-3 opacity-50" /> {auction.location_city?.toLowerCase()} ({auction.location_province})
+                    </p>
+                    <p className="text-[10px] text-slate-400 italic flex items-center gap-1 truncate">
+                      <Gavel className="w-3 h-3 opacity-50" /> {auction.court}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-bold text-sm text-slate-800 leading-tight mb-1 line-clamp-2">{auction.description || auction.title}</h3>
-                <p className="text-[11px] text-slate-500 mb-2 capitalize">{auction.location_city?.toLowerCase()} ({auction.location_province})</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-700 font-bold">{auction.amount ? `${auction.amount.toLocaleString()} €` : 'Consultar'}</span>
-                  <a href={auction.url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-700 hover:text-white transition-all shadow-sm" onClick={(e) => e.stopPropagation()}>BOE</a>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold text-slate-400 leading-none mb-1">Valor Subasta</span>
+                    <span className="text-blue-700 font-extrabold text-lg leading-none">
+                      {auction.amount ? `${auction.amount.toLocaleString('es-ES')} €` : 'N/A'}
+                    </span>
+                  </div>
+                  <a 
+                    href={auction.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-95" 
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    BOE <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 bg-slate-200 relative`}>
+        {/* Map View */}
+        <div className={`${viewMode === 'map' ? 'block' : 'hidden'} flex-1 bg-slate-200 relative`}>
           <div style={{ position: 'absolute', inset: 0 }}>
             <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} zoomControl={false}>
               <ChangeView center={mapCenter} zoom={mapZoom} />
               <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              {filteredAuctions.filter(a => a.lat && a.lng).map(auction => (
+              {filteredAndSortedAuctions.filter(a => a.lat && a.lng).map(auction => (
                 <Marker key={auction.id} position={[auction.lat!, auction.lng!]}>
                   <Popup>
-                    <div className="w-48 text-sm">
-                      <h4 className="font-bold mb-1">{auction.title}</h4>
-                      <p className="text-xs text-slate-600 mb-2 line-clamp-2">{auction.description}</p>
-                      <div className="flex items-center justify-between border-t pt-1">
-                         <span className="font-bold text-blue-700">{auction.amount ? `${auction.amount.toLocaleString()} €` : ''}</span>
-                         <a href={auction.url} target="_blank" className="text-blue-500 font-bold" rel="noreferrer">BOE</a>
+                    <div className="w-56 p-1">
+                      <div className="flex items-center gap-1 mb-2">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-1 rounded">{auction.id}</span>
+                        {auction.status === 'LIVE' && <span className="text-[9px] font-bold text-green-600 bg-green-100 px-1 rounded">LIVE</span>}
+                      </div>
+                      <h4 className="font-bold text-sm mb-2 leading-tight text-slate-800">{auction.title}</h4>
+                      <p className="text-[11px] text-slate-600 mb-3 line-clamp-2">{auction.description}</p>
+                      <div className="flex items-center justify-between border-t pt-2 mt-2">
+                         <span className="font-black text-blue-700">{auction.amount ? `${auction.amount.toLocaleString('es-ES')} €` : ''}</span>
+                         <a href={auction.url} target="_blank" className="text-[10px] text-white bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-700 flex items-center gap-1" rel="noreferrer">
+                          VER BOE <ExternalLink className="w-2.5 h-2.5" />
+                         </a>
                       </div>
                     </div>
                   </Popup>
                 </Marker>
               ))}
             </MapContainer>
+          </div>
+          
+          {/* Map Attribution Overlay (custom position) */}
+          <div className="absolute bottom-4 right-4 z-[1000] bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] text-slate-500 shadow-sm border border-slate-200">
+            &copy; OpenStreetMap contributors
           </div>
         </div>
       </main>
