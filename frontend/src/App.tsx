@@ -105,8 +105,8 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-      <header className="bg-blue-700 text-white shadow-md p-4 flex flex-col md:flex-row justify-between items-center gap-4 z-[1001]">
+    <div className="flex flex-col h-screen w-full bg-slate-50 font-sans text-slate-900 overflow-hidden">
+      <header className="bg-blue-700 text-white shadow-md p-4 flex flex-col md:flex-row justify-between items-center gap-4 z-[1001] shrink-0">
         <div className="flex items-center gap-2">
           <Building2 className="w-8 h-8" />
           <div>
@@ -143,7 +143,7 @@ function App() {
       </header>
 
       <main className="flex flex-1 overflow-hidden relative">
-        <div className={`${viewMode === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] overflow-y-auto flex-col border-r bg-white shadow-xl z-20`}>
+        <div className={`${viewMode === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] overflow-y-auto flex-col border-r bg-white shadow-xl z-20 shrink-0`}>
           <div className="p-3 bg-slate-100 border-b flex justify-between items-center text-sm">
             <span className="font-semibold text-slate-600">{filteredAuctions.length} Resultados</span>
             {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent" />}
@@ -171,24 +171,26 @@ function App() {
         </div>
 
         <div className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 bg-slate-200 relative`}>
-          <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-            <ChangeView center={mapCenter} zoom={mapZoom} />
-            <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {filteredAuctions.filter(a => a.lat && a.lng).map(auction => (
-              <Marker key={auction.id} position={[auction.lat!, auction.lng!]}>
-                <Popup>
-                  <div className="w-48 text-sm">
-                    <h4 className="font-bold mb-1">{auction.title}</h4>
-                    <p className="text-xs text-slate-600 mb-2 line-clamp-2">{auction.description}</p>
-                    <div className="flex items-center justify-between border-t pt-1">
-                       <span className="font-bold text-blue-700">{auction.amount ? `${auction.amount.toLocaleString()} €` : ''}</span>
-                       <a href={auction.url} target="_blank" className="text-blue-500 font-bold" rel="noreferrer">BOE</a>
+          <div className="absolute inset-0">
+            <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+              <ChangeView center={mapCenter} zoom={mapZoom} />
+              <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {filteredAuctions.filter(a => a.lat && a.lng).map(auction => (
+                <Marker key={auction.id} position={[auction.lat!, auction.lng!]}>
+                  <Popup>
+                    <div className="w-48 text-sm">
+                      <h4 className="font-bold mb-1">{auction.title}</h4>
+                      <p className="text-xs text-slate-600 mb-2 line-clamp-2">{auction.description}</p>
+                      <div className="flex items-center justify-between border-t pt-1">
+                         <span className="font-bold text-blue-700">{auction.amount ? `${auction.amount.toLocaleString()} €` : ''}</span>
+                         <a href={auction.url} target="_blank" className="text-blue-500 font-bold" rel="noreferrer">BOE</a>
+                      </div>
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
         </div>
       </main>
     </div>
